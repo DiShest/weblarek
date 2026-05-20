@@ -23,7 +23,7 @@ export interface IProductsResponse {
   items: IProduct[];
 }
 
-export type TPayment = 'card' | 'cash' | '';
+export type TPayment = 'card' | 'cash';
 
 export interface IOrder {
   payment: TPayment;
@@ -46,3 +46,10 @@ export interface IOrderResult {
 }
 
 export type TFormErrors = Partial<Record<keyof IOrder, string>>;
+
+export interface IBuyer {
+  payment?: TPayment;
+  email: string;
+  address: string;
+  phone: string;
+}

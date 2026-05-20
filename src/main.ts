@@ -5,18 +5,19 @@ import { API_URL } from './utils/constants';
 import { AppApi } from './components/AppApi';
 import { ProductsModel } from './components/models/ProductsModel';
 import { BasketModel } from './components/models/BasketModel';
-import { OrderModel } from './components/models/OrderModel';
+import { BuyerModel } from './components/models/BuyerModel';
+import { IOrder } from './types';
 
 const baseApi = new Api(API_URL);
 const appApi = new AppApi(baseApi);
 
 const productsModel = new ProductsModel();
 const basketModel = new BasketModel();
-const orderModel = new OrderModel();
+const buyerModel = new BuyerModel();
 
 console.log('Экземпляр каталога:', productsModel);
 console.log('Экземпляр корзины:', basketModel);
-console.log('Экземпляр заказа:', orderModel);
+console.log('Экземпляр покупателя:', buyerModel);
 
 appApi
   .getProducts()
@@ -44,19 +45,33 @@ appApi
     basketModel.removeItem(firstProduct.id);
     console.log('Корзина после удаления товара:', basketModel.getItems());
 
-    orderModel.setPayment('card');
-    orderModel.setField('address', 'Тестовый адрес');
-    orderModel.setField('email', 'test@example.com');
-    orderModel.setField('phone', '+79990000000');
-    orderModel.setItems(basketModel.getItems().map((item) => item.id));
-    orderModel.setTotal(basketModel.getTotal());
+    buyerModel.setPayment('card');
+    buyerModel.setField('address', 'Тестовый адрес');
+    buyerModel.setField('email', 'test@example.com');
+    buyerModel.setField('phone', '+79990000000');
 
-    console.log('Данные заказа:', orderModel.getOrder());
-    console.log('Ошибки валидации заполненного заказа:', orderModel.validate());
+    console.log('Данные покупателя:', buyerModel.getData());
+    console.log('Ошибки валидации заполненных данных покупателя:', buyerModel.validate());
+const buyerData = buyerModel.getData();
 
-    orderModel.clear();
-    console.log('Заказ после очистки:', orderModel.getOrder());
-    console.log('Ошибки валидации пустого заказа:', orderModel.validate());
+if (!buyerData.payment) {
+  throw new Error('Не выбран способ оплаты');
+}
+
+const order: IOrder = {
+  payment: buyerData.payment,
+  address: buyerData.address,
+  email: buyerData.email,
+  phone: buyerData.phone,
+  items: basketModel.getItems().map((item) => item.id),
+  total: basketModel.getTotal(),
+};
+
+    console.log('Заказ для отправки:', order);
+
+    buyerModel.clear();
+    console.log('Данные покупателя после очистки:', buyerModel.getData());
+    console.log('Ошибки валидации пустых данных покупателя:', buyerModel.validate());
 
     basketModel.clear();
     console.log('Корзина после очистки:', basketModel.getItems());
