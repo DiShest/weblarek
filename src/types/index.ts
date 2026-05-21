@@ -48,7 +48,7 @@ export interface IOrderResult {
 export type TFormErrors = Partial<Record<keyof IOrder, string>>;
 
 export interface IBuyer {
-  payment?: TPayment;
+ payment: TPayment | '';
   email: string;
   address: string;
   phone: string;

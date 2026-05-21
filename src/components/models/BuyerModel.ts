@@ -1,11 +1,12 @@
 import { IBuyer, TFormErrors, TPayment } from '../../types';
 
 export class BuyerModel {
-  protected buyer: IBuyer = {
-    email: '',
-    address: '',
-    phone: '',
-  };
+protected buyer: IBuyer = {
+  payment: '',
+  email: '',
+  address: '',
+  phone: '',
+};
 
   setField<K extends keyof IBuyer>(field: K, value: IBuyer[K]): void {
     this.buyer[field] = value;
@@ -43,9 +44,10 @@ export class BuyerModel {
 
   clear(): void {
     this.buyer = {
-      email: '',
-      address: '',
-      phone: '',
-    };
+  payment: '',
+  email: '',
+  address: '',
+  phone: '',
+};
   }
 }
