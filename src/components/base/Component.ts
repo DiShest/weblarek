@@ -18,6 +18,24 @@ export abstract class Component<T> {
         }
     }
 
+    protected setText(element: HTMLElement, value: unknown): void {
+  if (element) {
+    element.textContent = String(value);
+  }
+}
+
+protected setDisabled(element: HTMLButtonElement, state: boolean): void {
+  if (element) {
+    element.disabled = state;
+  }
+}
+
+protected toggleClass(element: HTMLElement, className: string, state?: boolean): void {
+  if (element) {
+    element.classList.toggle(className, state);
+  }
+}
+
     // Вернуть корневой DOM-элемент
     render(data?: Partial<T>): HTMLElement {
         Object.assign(this as object, data ?? {});

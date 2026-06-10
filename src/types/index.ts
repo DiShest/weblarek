@@ -53,3 +53,9 @@ export interface IBuyer {
   address: string;
   phone: string;
 }
+
+export interface IPage {
+  catalog: HTMLElement[];
+  counter: number;
+  locked: boolean;
+}

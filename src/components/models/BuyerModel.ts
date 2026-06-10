@@ -1,19 +1,24 @@
 import { IBuyer, TFormErrors, TPayment } from '../../types';
+import { IEvents } from '../base/Events';
 
 export class BuyerModel {
-protected buyer: IBuyer = {
-  payment: '',
-  email: '',
-  address: '',
-  phone: '',
-};
+  protected buyer: IBuyer = {
+    payment: '',
+    email: '',
+    address: '',
+    phone: '',
+  };
+
+  constructor(protected events: IEvents) {}
 
   setField<K extends keyof IBuyer>(field: K, value: IBuyer[K]): void {
     this.buyer[field] = value;
+    this.events.emit('buyer:changed', this.buyer);
   }
 
   setPayment(payment: TPayment): void {
     this.buyer.payment = payment;
+    this.events.emit('buyer:changed', this.buyer);
   }
 
   getData(): IBuyer {
@@ -44,10 +49,12 @@ protected buyer: IBuyer = {
 
   clear(): void {
     this.buyer = {
-  payment: '',
-  email: '',
-  address: '',
-  phone: '',
-};
+      payment: '',
+      email: '',
+      address: '',
+      phone: '',
+    };
+
+    this.events.emit('buyer:changed', this.buyer);
   }
 }

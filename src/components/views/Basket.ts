@@ -1,0 +1,39 @@
+import { Component } from '../base/Component';
+import { IEvents } from '../base/Events';
+
+interface IBasketView {
+  items: HTMLElement[];
+  total: number;
+  selected: string[];
+}
+
+export class Basket extends Component<IBasketView> {
+  protected _list: HTMLElement;
+  protected _total: HTMLElement;
+  protected _button: HTMLButtonElement;
+
+  constructor(container: HTMLElement, protected events: IEvents) {
+    super(container);
+
+    this._list = this.container.querySelector('.basket__list')!;
+    this._total = this.container.querySelector('.basket__price')!;
+    this._button = this.container.querySelector('.basket__button')!;
+
+    this._button.addEventListener('click', () => {
+      this.events.emit('order:open');
+    });
+  }
+
+  set items(items: HTMLElement[]) {
+    this._list.replaceChildren(...items);
+    this.setDisabled(this._button, items.length === 0);
+  }
+
+  set total(value: number) {
+    this.setText(this._total, `${value} синапсов`);
+  }
+
+  set selected(items: string[]) {
+    this.setDisabled(this._button, items.length === 0);
+  }
+}
