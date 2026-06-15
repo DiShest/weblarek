@@ -12,8 +12,9 @@ export class BasketModel {
 
   addItem(item: IProduct): void {
     this.items.push(item);
+
     this.events.emit('basket:changed', {
-      items: this.items,
+      items: this.getItems(),
     });
   }
 
@@ -21,7 +22,7 @@ export class BasketModel {
     this.items = this.items.filter((item) => item.id !== id);
 
     this.events.emit('basket:changed', {
-      items: this.items,
+      items: this.getItems(),
     });
   }
 
@@ -29,7 +30,7 @@ export class BasketModel {
     this.items = [];
 
     this.events.emit('basket:changed', {
-      items: this.items,
+      items: this.getItems(),
     });
   }
 

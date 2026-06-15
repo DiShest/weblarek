@@ -13,12 +13,12 @@ export class BuyerModel {
 
   setField<K extends keyof IBuyer>(field: K, value: IBuyer[K]): void {
     this.buyer[field] = value;
-    this.events.emit('buyer:changed', this.buyer);
+    this.events.emit('buyer:changed', this.getData());
   }
 
   setPayment(payment: TPayment): void {
     this.buyer.payment = payment;
-    this.events.emit('buyer:changed', this.buyer);
+    this.events.emit('buyer:changed', this.getData());
   }
 
   getData(): IBuyer {
@@ -55,6 +55,6 @@ export class BuyerModel {
       phone: '',
     };
 
-    this.events.emit('buyer:changed', this.buyer);
+    this.events.emit('buyer:changed', this.getData());
   }
 }

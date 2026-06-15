@@ -1,6 +1,5 @@
-import { Component } from './Component';
-import { IEvents } from './Events';
-
+import { Component } from '../base/Component';
+import { IEvents } from '../base/Events';
 export interface IFormState {
   valid: boolean;
   errors: string[];

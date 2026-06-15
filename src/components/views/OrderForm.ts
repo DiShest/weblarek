@@ -1,17 +1,17 @@
-import { Form } from '../base/Form';
+import { Form } from './Form';
 import { IEvents } from '../base/Events';
 import { TPayment } from '../../types';
 
-interface IOrderForm {
-  address: string;
-  payment: TPayment;
-  valid: boolean;
-  errors: string[];
+interface IOrderFormState {
+  address?: string;
+  payment?: TPayment | '';
+  valid?: boolean;
+  errors?: string[];
 }
-
 export class OrderForm extends Form {
   protected _cardButton: HTMLButtonElement;
   protected _cashButton: HTMLButtonElement;
+  protected _address: HTMLInputElement;
 
   constructor(container: HTMLFormElement, events: IEvents) {
     super(container, events);
@@ -23,6 +23,10 @@ export class OrderForm extends Form {
     this._cashButton = container.querySelector(
       'button[name="cash"]'
     ) as HTMLButtonElement;
+
+    this._address = container.querySelector(
+      'input[name="address"]'
+    ) as HTMLInputElement;
 
     this._cardButton?.addEventListener('click', () => {
       this.events.emit('order.payment:change', {
@@ -49,8 +53,20 @@ export class OrderForm extends Form {
     );
   }
 
-  render(state: Partial<IOrderForm>): HTMLElement {
+  set address(value: string) {
+    this._address.value = value;
+  }
+
+  render(state: Partial<IOrderFormState>): HTMLElement {
     super.render(state);
+
+    if (state.address !== undefined) {
+      this.address = state.address;
+    }
+
+    if (state.payment) {
+  this.payment = state.payment;
+}
     return this.container;
   }
 }

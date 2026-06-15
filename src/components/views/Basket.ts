@@ -4,9 +4,8 @@ import { IEvents } from '../base/Events';
 interface IBasketView {
   items: HTMLElement[];
   total: number;
-  selected: string[];
+  disabled: boolean;
 }
-
 export class Basket extends Component<IBasketView> {
   protected _list: HTMLElement;
   protected _total: HTMLElement;
@@ -33,7 +32,7 @@ export class Basket extends Component<IBasketView> {
     this.setText(this._total, `${value} синапсов`);
   }
 
-  set selected(items: string[]) {
-    this.setDisabled(this._button, items.length === 0);
-  }
+set disabled(value: boolean) {
+    this.setDisabled(this._button, value);
+}
 }

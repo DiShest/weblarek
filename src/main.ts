@@ -8,7 +8,8 @@ import { ProductsModel } from './components/models/ProductsModel';
 import { BasketModel } from './components/models/BasketModel';
 import { BuyerModel } from './components/models/BuyerModel';
 import { Page } from './components/views/Page';
-import { Card } from './components/views/Card';
+import { CatalogCard } from './components/views/CatalogCard';
+import { PreviewCard } from './components/views/PreviewCard';
 import { Modal } from './components/views/Modal';
 import { Basket } from './components/views/Basket';
 import { BasketItem } from './components/views/BasketItem';
@@ -27,7 +28,7 @@ const basketModel = new BasketModel(events);
 const buyerModel = new BuyerModel(events);
 
 const page = new Page(document.body, events);
-page.counter = 0;
+page.counter = basketModel.getCount();
 
 const modal = new Modal(
   document.querySelector<HTMLElement>('#modal-container')!,
@@ -49,44 +50,31 @@ const contactsTemplate =
 const successTemplate =
   document.querySelector<HTMLTemplateElement>('#success')!;
 
-let orderForm: OrderForm | null = null;
-let contactsForm: ContactsForm | null = null;
+const orderElement = orderTemplate.content
+  .querySelector('.form')!
+  .cloneNode(true) as HTMLFormElement;
 
-const validateOrderForm = () => {
-  const buyer = buyerModel.getData();
-  const errors: string[] = [];
+const orderForm = new OrderForm(orderElement, events);
 
-  if (!buyer.payment) {
-    errors.push('Необходимо выбрать способ оплаты');
-  }
+const contactsElement = contactsTemplate.content
+  .querySelector('.form')!
+  .cloneNode(true) as HTMLFormElement;
 
-  if (!buyer.address) {
-    errors.push('Необходимо указать адрес');
-  }
+const contactsForm = new ContactsForm(contactsElement, events);
 
-  return {
-    valid: errors.length === 0,
-    errors,
-  };
-};
+const previewElement = cardPreviewTemplate.content
+  .querySelector('.card')!
+  .cloneNode(true) as HTMLElement;
 
-const validateContactsForm = () => {
-  const buyer = buyerModel.getData();
-  const errors: string[] = [];
+const previewCard = new PreviewCard(previewElement, () => {
+  events.emit('preview:buy');
+});
 
-  if (!buyer.email) {
-    errors.push('Необходимо указать email');
-  }
+const successElement = successTemplate.content
+  .querySelector('.order-success')!
+  .cloneNode(true) as HTMLElement;
 
-  if (!buyer.phone) {
-    errors.push('Необходимо указать телефон');
-  }
-
-  return {
-    valid: errors.length === 0,
-    errors,
-  };
-};
+const success = new Success(successElement, events);
 
 events.on<{ items: IProduct[] }>('catalog:changed', ({ items }) => {
   const cards = items.map((item) => {
@@ -94,52 +82,48 @@ events.on<{ items: IProduct[] }>('catalog:changed', ({ items }) => {
       .querySelector('.card')!
       .cloneNode(true) as HTMLElement;
 
-    const card = new Card(cardElement, {
-      onClick: () => {
-        productsModel.setPreview(item);
-      },
+    const card = new CatalogCard(cardElement, () => {
+      events.emit('product:select', item);
     });
 
     return card.render({
       ...item,
       image: `${CDN_URL}${item.image}`,
+      imageAlt: item.title,
     });
   });
 
   page.catalog = cards;
 });
 
+events.on<IProduct>('product:select', (item) => {
+  productsModel.setPreview(item);
+});
+
 events.on<IProduct>('preview:changed', (item) => {
-  const cardElement = cardPreviewTemplate.content
-    .querySelector('.card')!
-    .cloneNode(true) as HTMLElement;
-
-  const card = new Card(cardElement, {
-    onClick: () => {
-      basketModel.addItem(item);
-      modal.close();
-    },
-  });
-
   modal.render({
-    content: card.render({
+    content: previewCard.render({
       ...item,
       image: `${CDN_URL}${item.image}`,
+      imageAlt: item.title,
       buttonText: 'Купить',
     }),
   });
 });
 
-events.on<{ items: IProduct[] }>('basket:changed', () => {
-  page.counter = basketModel.getCount();
+events.on('preview:buy', () => {
+  const item = productsModel.getPreview();
+
+  if (!item) {
+    return;
+  }
+
+  basketModel.addItem(item);
+  modal.close();
 });
 
-events.on('basket:open', () => {
-  const basketElement = basketTemplate.content
-    .querySelector('.basket')!
-    .cloneNode(true) as HTMLElement;
-
-  const basket = new Basket(basketElement, events);
+events.on<{ items: IProduct[] }>('basket:changed', () => {
+  page.counter = basketModel.getCount();
 
   const basketItems = basketModel.getItems().map((item, index) => {
     const itemElement = cardBasketTemplate.content
@@ -148,8 +132,7 @@ events.on('basket:open', () => {
 
     const basketItem = new BasketItem(itemElement, {
       onClick: () => {
-        basketModel.removeItem(item.id);
-        events.emit('basket:open');
+       events.emit('basket:remove', { id: item.id });
       },
     });
 
@@ -159,28 +142,41 @@ events.on('basket:open', () => {
     });
   });
 
+  basket.render({
+    items: basketItems,
+    total: basketModel.getTotal(),
+    disabled: basketModel.getCount() === 0,
+  });
+});
+
+events.on<{ id: string }>('basket:remove', ({ id }) => {
+  basketModel.removeItem(id);
+});
+
+const basketElement = basketTemplate.content
+  .querySelector('.basket')!
+  .cloneNode(true) as HTMLElement;
+
+const basket = new Basket(basketElement, events);
+
+events.on('basket:open', () => {
   modal.render({
-    content: basket.render({
-      items: basketItems,
-      total: basketModel.getTotal(),
-      selected: basketModel.getItems().map((item) => item.id),
-    }),
+    content: basket.render(),
   });
 });
 
 events.on('order:open', () => {
-  const orderElement = orderTemplate.content
-    .querySelector('.form')!
-    .cloneNode(true) as HTMLFormElement;
-
-  orderForm = new OrderForm(orderElement, events);
-
   const buyer = buyerModel.getData();
+  const errors = buyerModel.validate();
 
   modal.render({
     content: orderForm.render({
-      ...validateOrderForm(),
-      ...(buyer.payment ? { payment: buyer.payment } : {}),
+      address: buyer.address,
+      payment: buyer.payment,
+      valid: !errors.payment && !errors.address,
+      errors: [errors.payment, errors.address].filter(
+        (error): error is string => Boolean(error)
+      ),
     }),
   });
 });
@@ -189,34 +185,21 @@ events.on<{ field: 'address'; value: string }>(
   'order.address:change',
   ({ field, value }) => {
     buyerModel.setField(field, value);
-
-    const buyer = buyerModel.getData();
-
-    orderForm?.render({
-      ...validateOrderForm(),
-      ...(buyer.payment ? { payment: buyer.payment } : {}),
-    });
   }
 );
 
 events.on<{ payment: TPayment }>('order.payment:change', ({ payment }) => {
   buyerModel.setPayment(payment);
-
-  orderForm?.render({
-    ...validateOrderForm(),
-    payment,
-  });
 });
 
 events.on('order:submit', () => {
-  const contactsElement = contactsTemplate.content
-    .querySelector('.form')!
-    .cloneNode(true) as HTMLFormElement;
-
-  contactsForm = new ContactsForm(contactsElement, events);
+  const errors = buyerModel.validate();
 
   modal.render({
-    content: contactsForm.render(validateContactsForm()),
+    content: contactsForm.render({
+      valid: !errors.email && !errors.phone,
+      errors: [errors.email, errors.phone].filter((error): error is string => Boolean(error)),
+    }),
   });
 });
 
@@ -224,7 +207,6 @@ events.on<{ field: 'email' | 'phone'; value: string }>(
   'contacts.email:change',
   ({ field, value }) => {
     buyerModel.setField(field, value);
-    contactsForm?.render(validateContactsForm());
   }
 );
 
@@ -232,19 +214,37 @@ events.on<{ field: 'email' | 'phone'; value: string }>(
   'contacts.phone:change',
   ({ field, value }) => {
     buyerModel.setField(field, value);
-    contactsForm?.render(validateContactsForm());
   }
 );
+
+events.on('buyer:changed', () => {
+  const buyer = buyerModel.getData();
+  const errors = buyerModel.validate();
+
+  orderForm.render({
+    address: buyer.address,
+    payment: buyer.payment,
+    valid: !errors.payment && !errors.address,
+    errors: [errors.payment, errors.address].filter(
+      (error): error is string => Boolean(error)
+    ),
+  });
+
+  contactsForm.render({
+    email: buyer.email,
+    phone: buyer.phone,
+    valid: !errors.email && !errors.phone,
+    errors: [errors.email, errors.phone].filter(
+      (error): error is string => Boolean(error)
+    ),
+  });
+});
 
 events.on('contacts:submit', () => {
   const buyer = buyerModel.getData();
 
-  if (!buyer.payment) {
-    return;
-  }
-
   const order: IOrder = {
-    payment: buyer.payment,
+    payment: buyer.payment as TPayment,
     address: buyer.address,
     email: buyer.email,
     phone: buyer.phone,
@@ -255,12 +255,6 @@ events.on('contacts:submit', () => {
   appApi
     .createOrder(order)
     .then((result) => {
-      const successElement = successTemplate.content
-        .querySelector('.order-success')!
-        .cloneNode(true) as HTMLElement;
-
-      const success = new Success(successElement, events);
-
       basketModel.clear();
       buyerModel.clear();
 

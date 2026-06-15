@@ -8,9 +8,12 @@ export class ProductsModel {
   constructor(protected events: IEvents) {}
 
   setItems(items: IProduct[]): void {
-    this.items = items;
-    this.events.emit('catalog:changed', { items: this.items });
-  }
+  this.items = items;
+
+  this.events.emit('catalog:changed', {
+    items: this.getItems(),
+  });
+}
 
   getItems(): IProduct[] {
     return this.items;
