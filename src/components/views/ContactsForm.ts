@@ -2,13 +2,11 @@ import { Form } from './Form';
 import { IEvents } from '../base/Events';
 
 interface IContactsFormState {
-  email?: string;
-  phone?: string;
-  valid?: boolean;
-  errors?: string[];
+  email: string;
+  phone: string;
 }
 
-export class ContactsForm extends Form {
+export class ContactsForm extends Form<IContactsFormState> {
   protected _email: HTMLInputElement;
   protected _phone: HTMLInputElement;
 
@@ -30,19 +28,5 @@ export class ContactsForm extends Form {
 
   set phone(value: string) {
     this._phone.value = value;
-  }
-
-  render(state: Partial<IContactsFormState>): HTMLElement {
-    super.render(state);
-
-    if (state.email !== undefined) {
-      this.email = state.email;
-    }
-
-    if (state.phone !== undefined) {
-      this.phone = state.phone;
-    }
-
-    return this.container;
   }
 }

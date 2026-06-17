@@ -88,8 +88,10 @@ events.on<{ items: IProduct[] }>('catalog:changed', ({ items }) => {
 
     return card.render({
       ...item,
-      image: `${CDN_URL}${item.image}`,
-      imageAlt: item.title,
+      image: {
+        src: `${CDN_URL}${item.image}`,
+        alt: item.title,
+      },
     });
   });
 
@@ -101,12 +103,24 @@ events.on<IProduct>('product:select', (item) => {
 });
 
 events.on<IProduct>('preview:changed', (item) => {
+  const isInBasket = basketModel.hasItem(item.id);
+
+  const buttonText =
+    item.price === null
+      ? 'Недоступно'
+      : isInBasket
+        ? 'Удалить из корзины'
+        : 'Купить';
+
   modal.render({
     content: previewCard.render({
       ...item,
-      image: `${CDN_URL}${item.image}`,
-      imageAlt: item.title,
-      buttonText: 'Купить',
+      image: {
+        src: `${CDN_URL}${item.image}`,
+        alt: item.title,
+      },
+      buttonText,
+      disabled: item.price === null,
     }),
   });
 });
@@ -114,11 +128,16 @@ events.on<IProduct>('preview:changed', (item) => {
 events.on('preview:buy', () => {
   const item = productsModel.getPreview();
 
-  if (!item) {
+  if (!item || item.price === null) {
     return;
   }
 
-  basketModel.addItem(item);
+  if (basketModel.hasItem(item.id)) {
+    basketModel.removeItem(item.id);
+  } else {
+    basketModel.addItem(item);
+  }
+
   modal.close();
 });
 
@@ -137,7 +156,8 @@ events.on<{ items: IProduct[] }>('basket:changed', () => {
     });
 
     return basketItem.render({
-      ...item,
+      title: item.title,
+      price: item.price,
       index: index + 1,
     });
   });

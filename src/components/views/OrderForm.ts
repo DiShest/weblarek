@@ -3,12 +3,11 @@ import { IEvents } from '../base/Events';
 import { TPayment } from '../../types';
 
 interface IOrderFormState {
-  address?: string;
-  payment?: TPayment | '';
-  valid?: boolean;
-  errors?: string[];
+  address: string;
+  payment: TPayment | '';
 }
-export class OrderForm extends Form {
+
+export class OrderForm extends Form<IOrderFormState> {
   protected _cardButton: HTMLButtonElement;
   protected _cashButton: HTMLButtonElement;
   protected _address: HTMLInputElement;
@@ -41,13 +40,13 @@ export class OrderForm extends Form {
     });
   }
 
-  set payment(value: TPayment) {
-    this._cardButton?.classList.toggle(
+  set payment(value: TPayment | '') {
+    this._cardButton.classList.toggle(
       'button_alt-active',
       value === 'card'
     );
 
-    this._cashButton?.classList.toggle(
+    this._cashButton.classList.toggle(
       'button_alt-active',
       value === 'cash'
     );
@@ -55,18 +54,5 @@ export class OrderForm extends Form {
 
   set address(value: string) {
     this._address.value = value;
-  }
-
-  render(state: Partial<IOrderFormState>): HTMLElement {
-    super.render(state);
-
-    if (state.address !== undefined) {
-      this.address = state.address;
-    }
-
-    if (state.payment) {
-  this.payment = state.payment;
-}
-    return this.container;
   }
 }

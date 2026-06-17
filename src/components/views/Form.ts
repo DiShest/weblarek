@@ -5,7 +5,7 @@ export interface IFormState {
   errors: string[];
 }
 
-export class Form extends Component<IFormState> {
+export class Form<T = {}> extends Component<T & IFormState> {
   protected _submitButton: HTMLButtonElement;
   protected _errors: HTMLElement;
 
@@ -43,10 +43,5 @@ export class Form extends Component<IFormState> {
 
   set errors(value: string[]) {
     this.setText(this._errors, value.join('; '));
-  }
-
-  render(state: Partial<IFormState>): HTMLElement {
-    super.render(state);
-    return this.container;
   }
 }
